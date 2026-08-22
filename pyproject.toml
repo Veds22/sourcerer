@@ -5,11 +5,19 @@ description = "Personal assistant, exposed as MCP tools. v1: tested via Claude D
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "fastapi>=0.141.1",
     "fastmcp>=3.4.7",
+    "langchain-core>=1.6.0",
+    "langchain-groq>=1.1.3",
+    "langchain-mcp-adapters>=0.3.2",
+    "langgraph>=1.2.11",
+    "sse-starlette>=3.4.8",
+    "uvicorn>=0.52.4",
 ]
 
 [dependency-groups]
 dev = [
+    "langsmith>=0.11.1",
     "pytest>=9.1.1",
 ]
 
