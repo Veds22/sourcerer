@@ -29,8 +29,63 @@ logger = logging.getLogger("sourcerer.api")
 
 app = FastAPI(title="Sourcerer API")
 
-# Vite's default dev server origin. Add your deployed frontend's origin
-# here too once you host it somewhere for the interview demo.
+import httpx
+from fastapi import Request
+from fastapi.responses import StreamingResponse
+
+MCP_INTERNAL_URL = "http://127.0.0.1:8001/mcp"
+
+
+@app.api_route(
+    "/mcp",
+    methods=["GET", "POST", "DELETE"],
+)
+async def mcp_proxy(request: Request):
+    body = await request.body()
+
+    headers = {
+        key: value
+        for key, value in request.headers.items()
+        if key.lower() not in {"host", "content-length"}
+    }
+
+    client = httpx.AsyncClient(timeout=None)
+
+    upstream_request = client.build_request(
+        request.method,
+        MCP_INTERNAL_URL,
+        content=body,
+        headers=headers,
+        params=request.query_params,
+    )
+
+    try:
+        response = await client.send(upstream_request, stream=True)
+    except Exception:
+        await client.aclose()
+        raise
+
+    response_headers = {
+        key: value
+        for key, value in response.headers.items()
+        if key.lower()
+        not in {"content-length", "transfer-encoding", "connection"}
+    }
+
+    async def stream():
+        try:
+            async for chunk in response.aiter_raw():
+                yield chunk
+        finally:
+            await response.aclose()
+            await client.aclose()
+
+    return StreamingResponse(
+        stream(),
+        status_code=response.status_code,
+        headers=response_headers,
+    )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
