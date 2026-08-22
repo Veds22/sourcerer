@@ -88,7 +88,7 @@ async def mcp_proxy(request: Request):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "https://sourcerer-cyan.vercel.app"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
